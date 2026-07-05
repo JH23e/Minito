@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClassGuard - 실습 PC 모니터링 및 제어</title>
+  <!-- Outfit & Inter 구글 폰트 적용 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icon 라이브러리 사용 -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 전체 감싸기 -->
+  <div class="app-container">
+    
+    <!-- 1. 헤더 (Header) -->
+    <header class="main-header">
+      <div class="header-logo">
+        <div class="logo-icon">
+          <i data-lucide="shield-check"></i>
+        </div>
+        <div class="logo-text">
+          <h1>ClassGuard</h1>
+          <span class="logo-sub">실습실 관제 시스템</span>
+        </div>
+      </div>
+
+      <!-- 통계 위젯 -->
+      <div class="stats-container">
+        <div class="stat-badge total-badge">
+          <span class="stat-label">등록 PC</span>
+          <span class="stat-value" id="stat-total">0</span>
+        </div>
+        <div class="stat-badge online-badge">
+          <span class="stat-label">온라인</span>
+          <span class="stat-value" id="stat-online">0</span>
+        </div>
+      </div>
+
+      <!-- 우측 컨트롤 그룹 -->
+      <div class="header-controls">
+        <div class="classroom-info" id="btn-config-classroom">
+          <span class="room-label">현재 강의실</span>
+          <div class="room-badge">
+            <i data-lucide="map-pin"></i>
+            <span id="txt-classroom-id">301</span>호
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. 바디 콘텐츠 -->
+    <main class="main-content">
+      <!-- 학생 화면 바둑판 그리드 -->
+      <div class="grid-layout" id="students-grid">
+        <!-- 템플릿 카드 예시 (JS에서 동적 생성됨) -->
+        <div class="no-students">
+          <i data-lucide="monitor-off" class="empty-icon"></i>
+          <p>접속 대기 중...</p>
+          <span class="empty-sub">학생 PC에서 에이전트를 가동해 주세요.</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- 3. 강의실 설정 모달창 (Glassmorphism Modal) -->
+    <div class="modal-overlay" id="config-modal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>강의실 번호 설정</h2>
+          <button class="btn-close-modal" id="btn-close-modal">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-desc">
+            현재 관제할 강의실 번호를 입력하십시오.<br>
+            에이전트들에게 브로드캐스트 비콘 정보가 동적으로 실시간 업데이트됩니다.
+          </p>
+          <div class="input-group">
+            <label for="input-classroom-id">강의실 호수</label>
+            <input type="text" id="input-classroom-id" placeholder="예: 301, 502" maxlength="10">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" id="btn-cancel-modal">취소</button>
+          <button class="btn-save" id="btn-save-modal">저장 및 적용</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Socket.io 라이브러리 로드 -->
+  <script src="/socket.io/socket.io.js"></script>
+  <!-- 프론트엔드 비즈니스 로직 -->
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "classguard-server",
+  "version": "1.0.0",
+  "description": "ClassGuard monitoring and control central server with Electron dashboard",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "server": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0"
+  },
+  "author": "Antigravity",
+  "license": "ISC"
+}
