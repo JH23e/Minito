@@ -19,7 +19,7 @@ class MinitoServer {
     this.socketServer = new SocketServer(this.httpServer);
     
     this.serverIp = this.getLocalIP();
-    this.broadcaster = new UdpBeaconBroadcaster(this.configManager.config, this.serverIp);
+    this.broadcaster = new UdpBeaconBroadcaster(this.configManager.config);
     this.imageReceiver = new UdpImageReceiver(
       this.configManager.config.udp_port, 
       (studentId, base64Image) => this.socketServer.broadcastScreen(studentId, base64Image)

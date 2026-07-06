@@ -1,44 +1,80 @@
 const dgram = require('dgram');
+const os = require('os');
 
-// UDP 브로드캐스트 비콘을 송출하여 서버 IP를 광고하는 클래스
+// IP와 서브넷 마스크로 브로드캐스트 주소 계산
+function getBroadcastAddress(ip, netmask) {
+  try {
+    const ipParts = ip.split('.').map(Number);
+    const maskParts = netmask.split('.').map(Number);
+    const broadcastParts = [];
+    for (let i = 0; i < 4; i++) {
+      broadcastParts.push(ipParts[i] | (~maskParts[i] & 255));
+    }
+    return broadcastParts.join('.');
+  } catch (e) {
+    // 예외 발생 시 C클래스 기본 브로드캐스트 반환
+    const parts = ip.split('.');
+    parts[3] = '255';
+    return parts.join('.');
+  }
+}
+
+// 활성화된 모든 IPv4 어댑터 주소 및 브로드캐스트 주소 탐색
+function getActiveInterfaces() {
+  const list = [];
+  const interfaces = os.networkInterfaces();
+  for (const devName in interfaces) {
+    const iface = interfaces[devName];
+    for (let i = 0; i < iface.length; i++) {
+      const alias = iface[i];
+      if (alias.family === 'IPv4' && !alias.internal && alias.address !== '127.0.0.1') {
+        list.push({
+          ip: alias.address,
+          broadcast: getBroadcastAddress(alias.address, alias.netmask || '255.255.255.0')
+        });
+      }
+    }
+  }
+  return list;
+}
+
 class UdpBeaconBroadcaster {
-  constructor(config, serverIp) {
+  constructor(config) {
     this.config = config;
-    this.serverIp = serverIp;
     this.socket = dgram.createSocket('udp4');
     this.intervalId = null;
   }
 
-  // 2초 주기로 LAN 상에 자기소개 신호 전송
+  // 2초 주기로 활성화된 모든 LAN 대역 상에 자기소개 신호 전송
   start() {
     this.socket.bind(() => {
       this.socket.setBroadcast(true);
-      console.log(`[UDP] 브로드캐스트 비콘 송출 시작.`);
+      console.log(`[UDP] 다중 어댑터 브로드캐스트 비콘 송출 시작.`);
       
       this.intervalId = setInterval(() => {
-        // 강의실 지정이 완료되지 않았다면 비콘을 전송하지 않고 대기 (혼선 원천 방지)
-        if (!this.config.classroom_id) {
-          return;
-        }
+        if (!this.config.classroom_id) return;
 
-        const beacon = JSON.stringify({
-          classroom_id: this.config.classroom_id,
-          server_ip: this.serverIp,
-          port: this.config.port,
-          udp_port: this.config.udp_port
+        const activeInterfaces = getActiveInterfaces();
+        activeInterfaces.forEach(iface => {
+          const beacon = JSON.stringify({
+            classroom_id: this.config.classroom_id,
+            server_ip: iface.ip, // 해당 어댑터 대역의 교수 PC IP 장착
+            port: this.config.port,
+            udp_port: this.config.udp_port
+          });
+          const buffer = Buffer.from(beacon);
+          
+          this.socket.send(
+            buffer,
+            0,
+            buffer.length,
+            this.config.udp_broadcast_port,
+            iface.broadcast, // 해당 어댑터 대역의 전용 브로드캐스트 주소로 정밀 조준
+            (err) => {
+              if (err) console.error(`[UDP] 비콘 전송 실패 (${iface.broadcast}):`, err.message);
+            }
+          );
         });
-        const buffer = Buffer.from(beacon);
-        
-        this.socket.send(
-          buffer,
-          0,
-          buffer.length,
-          this.config.udp_broadcast_port,
-          '255.255.255.255',
-          (err) => {
-            if (err) console.error(`[UDP] 비콘 전송 실패:`, err);
-          }
-        );
       }, 2000);
     });
   }
@@ -46,7 +82,9 @@ class UdpBeaconBroadcaster {
   // 비콘 송출 안전 종료
   stop() {
     if (this.intervalId) clearInterval(this.intervalId);
-    this.socket.close();
+    try {
+      this.socket.close();
+    } catch (e) {}
   }
 }
 
