@@ -1,4 +1,4 @@
-// ClassGuard Client Dashboard App Logic
+// Minito Client Dashboard App Logic
 
 const socket = io();
 

@@ -1,7 +1,7 @@
 {
-  "name": "classguard-server",
+  "name": "minito-server",
   "version": "1.0.0",
-  "description": "ClassGuard monitoring and control central server with Electron dashboard",
+  "description": "Minito monitoring and control central server with Electron dashboard",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -17,7 +17,7 @@
     "electron-builder": "^24.13.3"
   },
   "build": {
-    "appId": "com.classguard.minito",
+    "appId": "com.minito.dashboard",
     "productName": "Minito_professor",
     "win": {
       "target": "nsis",

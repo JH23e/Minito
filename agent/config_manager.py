@@ -58,7 +58,7 @@ class ConfigManager:
                 0,
                 winreg.KEY_SET_VALUE
             )
-            winreg.SetValueEx(key, "ClassGuardAgent", 0, winreg.REG_SZ, f'"{exe_path}"')
+            winreg.SetValueEx(key, "MinitoAgent", 0, winreg.REG_SZ, f'"{exe_path}"')
             winreg.CloseKey(key)
             print("[설정] 시작프로그램 등록 성공")
         except Exception as e:

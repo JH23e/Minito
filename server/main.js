@@ -13,7 +13,7 @@ function createWindow() {
     height: 800,
     minWidth: 800,
     minHeight: 600,
-    title: "ClassGuard - 실습 PC 통합 관제 시스템",
+    title: "Minito - 실습 PC 통합 관제 시스템",
     backgroundColor: "#0d0e12",
     icon: path.join(__dirname, 'public', 'favicon.ico'), // 아이콘 임시 패스 지정
     webPreferences: {

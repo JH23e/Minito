@@ -11,7 +11,7 @@ const UdpImageReceiver = require('./udp_receiver');
 const SocketServer = require('./socket_server');
 
 // 모든 개별 모듈을 초기화하고 실행하는 마스터 오케스트레이터 클래스
-class ClassGuardServer {
+class MinitoServer {
   constructor() {
     this.configManager = new ConfigManager();
     this.app = express();
@@ -35,7 +35,7 @@ class ClassGuardServer {
     const psCmd = `
       [System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null;
       $form = New-Object Windows.Forms.Form;
-      $form.Text = 'ClassGuard 교수자 실습실 설정';
+      $form.Text = 'Minito 교수자 실습실 설정';
       $form.Size = New-Object Drawing.Size(320, 200);
       $form.StartPosition = 'CenterScreen';
       $form.FormBorderStyle = 'FixedDialog';
@@ -168,6 +168,6 @@ class ClassGuardServer {
 }
 
 // 싱글톤 기동
-const server = new ClassGuardServer();
+const server = new MinitoServer();
 server.start();
 

@@ -38,7 +38,7 @@ def remove_registry_keys():
             0,
             winreg.KEY_SET_VALUE
         )
-        winreg.DeleteValue(key, "ClassGuardAgent")
+        winreg.DeleteValue(key, "MinitoAgent")
         winreg.CloseKey(key)
     except FileNotFoundError:
         pass

@@ -16,7 +16,7 @@ from udp_listener import UdpBeaconListener
 from socket_client import SocketClient
 
 # 에이전트의 전체 기능을 조율하고 백그라운드 스레드를 구동하는 오케스트레이터 클래스
-class ClassGuardAgent:
+class MinitoAgent:
     def __init__(self, config_manager):
         self.config_manager = config_manager
         self.socket_client = SocketClient(self.config_manager.config)
@@ -147,12 +147,12 @@ def run_tray_icon(agent):
         icon.stop()
 
     menu = pystray.Menu(
-        pystray.MenuItem('ClassGuard Agent', lambda: None, enabled=False),
+        pystray.MenuItem('Minito Agent', lambda: None, enabled=False),
         pystray.MenuItem('설정 변경 (Settings)', on_configure),
         pystray.MenuItem('관제 종료 (Exit)', on_exit)
     )
 
-    icon = pystray.Icon("ClassGuardAgent", create_tray_image(), "Minito Student Agent", menu)
+    icon = pystray.Icon("MinitoAgent", create_tray_image(), "Minito Student Agent", menu)
     icon.run()
 
 if __name__ == '__main__':
@@ -163,8 +163,8 @@ if __name__ == '__main__':
         config_manager.load()
         
     if config_manager.is_valid():
-        print(f"[기동] ClassGuard Agent 시작. 강의실: {config_manager.config['classroom_id']}호 | 학생: {config_manager.config['student_name']}")
-        agent = ClassGuardAgent(config_manager)
+        print(f"[기동] Minito Agent 시작. 강의실: {config_manager.config['classroom_id']}호 | 학생: {config_manager.config['student_name']}")
+        agent = MinitoAgent(config_manager)
         
         # 핵심 네트워크 관제 스레드는 백그라운드로 뺌
         threading.Thread(target=agent.start, daemon=True).start()

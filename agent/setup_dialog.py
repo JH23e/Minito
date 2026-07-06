@@ -41,7 +41,7 @@ class SetupDialog:
         ps_cmd = (
             "[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; "
             "$form = New-Object Windows.Forms.Form; "
-            "$form.Text = 'ClassGuard 실습실 PC 설정'; "
+            "$form.Text = 'Minito 실습실 PC 설정'; "
             "$form.Size = New-Object Drawing.Size(340, 290); "
             "$form.StartPosition = 'CenterScreen'; "
             "$form.FormBorderStyle = 'FixedDialog'; "
@@ -148,7 +148,7 @@ class SetupDialog:
                 if self.on_config_changed:
                     self.on_config_changed()
             else:
-                self.show_info("ClassGuard Agent 설치 및 설정이 완료되었습니다.\n부팅 시 백그라운드에서 자동 구동됩니다.")
+                self.show_info("Minito Agent 설치 및 설정이 완료되었습니다.\n부팅 시 백그라운드에서 자동 구동됩니다.")
         else:
             self.show_error("설정 파일 저장에 실패했습니다.")
             sys.exit(1)

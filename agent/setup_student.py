@@ -74,7 +74,7 @@ def write_registry():
             0,
             winreg.KEY_SET_VALUE
         )
-        winreg.SetValueEx(key, "ClassGuardAgent", 0, winreg.REG_SZ, f'"{agent_exe}"')
+        winreg.SetValueEx(key, "MinitoAgent", 0, winreg.REG_SZ, f'"{agent_exe}"')
         winreg.CloseKey(key)
     except Exception as e:
         print(f"시작 프로그램 레지스트리 등록 실패: {e}")
@@ -88,7 +88,7 @@ def write_registry():
         winreg.SetValueEx(key, "DisplayName", 0, winreg.REG_SZ, "Minito Student Agent")
         winreg.SetValueEx(key, "UninstallString", 0, winreg.REG_SZ, f'"{uninstall_exe}"')
         winreg.SetValueEx(key, "DisplayVersion", 0, winreg.REG_SZ, "1.0.0")
-        winreg.SetValueEx(key, "Publisher", 0, winreg.REG_SZ, "ClassGuard")
+        winreg.SetValueEx(key, "Publisher", 0, winreg.REG_SZ, "Minito")
         winreg.SetValueEx(key, "DisplayIcon", 0, winreg.REG_SZ, f'"{agent_exe}"')
         winreg.CloseKey(key)
     except Exception as e:
