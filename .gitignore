@@ -228,3 +228,10 @@ yarn-error.log*
 /agent/build/
 *.log
 
+# --- Custom build tools & temp downloads ---
+build_student*.ps1
+python_embed.zip
+temp_python/
+
+
+
