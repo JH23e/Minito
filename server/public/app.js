@@ -14,34 +14,122 @@ const btnConfigClassroom = document.getElementById('btn-config-classroom');
 // 카드 엘리먼트 캐시 (socket.id -> DOM Element)
 const activeCards = {};
 
-// 전체화면 줌 모달 관련 글로벌 변수
+// 학생별 실시간 상태 데이터 캐시 (socket.id -> { processes, pc_number })
+const activeStudentsData = {};
+
+// 우측 제어 사이드바 관련 DOM 및 글로벌 변수
+const controlSidebar = document.getElementById('control-sidebar');
+const sidebarImg = document.getElementById('sidebar-img');
+const sidebarImgPlaceholder = document.getElementById('sidebar-img-placeholder');
+const sidebarTitle = document.getElementById('sidebar-title');
+const sidebarProcessList = document.getElementById('sidebar-process-list');
+const closeSidebarBtn = document.getElementById('close-sidebar');
+let activeSidebarSocketId = null; // 현재 제어 중인 학생 소켓 ID
+
+// 전체화면 이미지 확대 모달 관련 DOM 및 글로벌 변수
 const imageModal = document.getElementById('image-modal');
 const modalImg = document.getElementById('modal-img');
 const modalTitle = document.getElementById('modal-title');
 const closeModalBtn = document.getElementById('close-modal');
-let activeModalSocketId = null; // 현재 전체화면 보기 중인 학생의 소켓 ID
+let activeModalSocketId = null; // 현재 전체화면 확대 중인 학생 소켓 ID
 
-function openFullscreenModal(socketId, pcNumber) {
-  activeModalSocketId = socketId;
-  modalTitle.textContent = `PC ${pcNumber} 실시간 관제 화면`;
+function openControlSidebar(socketId, pcNumber) {
+  activeSidebarSocketId = socketId;
   
+  // 사이드바 개방 (380px)
+  controlSidebar.style.width = '380px';
+  controlSidebar.style.minWidth = '380px';
+  
+  sidebarTitle.textContent = `PC ${pcNumber} 제어`;
+  
+  // 현재 썸네일 갱신 동기화
   const card = activeCards[socketId];
   if (card) {
     const origImg = card.querySelector('.screen-img');
-    if (origImg) {
-      modalImg.src = origImg.src;
+    if (origImg && origImg.src) {
+      sidebarImg.src = origImg.src;
+      sidebarImgPlaceholder.style.display = 'none';
+    } else {
+      sidebarImg.src = '';
+      sidebarImgPlaceholder.style.display = 'flex';
     }
+  }
+  
+  // 프로세스 목록 렌더링
+  renderSidebarProcessList(socketId);
+}
+
+function closeControlSidebar() {
+  activeSidebarSocketId = null;
+  controlSidebar.style.width = '0px';
+  controlSidebar.style.minWidth = '0px';
+  closeFullscreenModal(); // 사이드바가 닫히면 전체화면 모달도 자동 안전 소거
+}
+
+function renderSidebarProcessList(socketId) {
+  sidebarProcessList.innerHTML = '';
+  const studentData = activeStudentsData[socketId];
+  if (!studentData) return;
+  
+  const processes = studentData.processes || [];
+  if (processes.length === 0) {
+    sidebarProcessList.innerHTML = `
+      <span style="color:var(--text-dark); font-size:0.78rem; font-weight:500; display:flex; align-items:center; gap:0.3rem; margin-top:0.5rem;">
+        <i data-lucide="check-circle" style="width:0.85rem;height:0.85rem;color:#10b981;"></i>프로그램 내역이 없습니다.
+      </span>
+    `;
+  } else {
+    processes.forEach(proc => {
+      const item = document.createElement('div');
+      item.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:0.45rem 0.65rem; background:#fef2f2; border:1px solid #fca5a5; border-radius:8px;';
+      
+      item.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:0.15rem; max-width:76%;">
+          <span style="font-size:0.8rem; font-weight:700; color:var(--danger); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${proc.title}">${proc.title}</span>
+          <span style="font-size:0.65rem; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${proc.name}</span>
+        </div>
+        <button class="btn-sidebar-kill" data-socket-id="${socketId}" data-proc-name="${proc.name}" title="프로그램 강제 종료" style="background:#ef4444; border:none; color:white; padding:0.25rem 0.55rem; border-radius:6px; font-size:0.68rem; font-weight:800; cursor:pointer; transition:background 0.2s; outline:none;">
+          종료
+        </button>
+      `;
+      
+      item.querySelector('.btn-sidebar-kill').addEventListener('click', (e) => {
+        const btn = e.currentTarget;
+        const targetSocketId = btn.getAttribute('data-socket-id');
+        const processName = btn.getAttribute('data-proc-name');
+        
+        btn.style.opacity = '0.5';
+        btn.disabled = true;
+        
+        console.log(`[Sidebar] 강제 종료 명령 전송: ${targetSocketId} -> ${processName}`);
+        socket.emit('kill_process', { targetSocketId, processName });
+      });
+      
+      sidebarProcessList.appendChild(item);
+    });
+  }
+  
+  lucide.createIcons();
+}
+
+function openFullscreenModal(socketId, pcNumber) {
+  activeModalSocketId = socketId;
+  modalTitle.textContent = `PC ${pcNumber} 화면 확대`;
+  
+  if (sidebarImg && sidebarImg.src) {
+    modalImg.src = sidebarImg.src;
   }
   imageModal.style.display = 'flex';
 }
 
 function closeFullscreenModal() {
   activeModalSocketId = null;
-  imageModal.style.display = 'none';
-  modalImg.src = '';
+  if (imageModal) imageModal.style.display = 'none';
+  if (modalImg) modalImg.src = '';
 }
 
-// 닫기 바인딩
+// 닫기 단추 리스너
+if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeControlSidebar);
 if (closeModalBtn) closeModalBtn.addEventListener('click', closeFullscreenModal);
 if (imageModal) {
   imageModal.addEventListener('click', (e) => {
@@ -50,6 +138,19 @@ if (imageModal) {
     }
   });
 }
+
+// 사이드바 내 이미지 클릭 시 100% 비율 전체화면 모달 실행
+if (sidebarImg) {
+  sidebarImg.addEventListener('click', () => {
+    if (activeSidebarSocketId) {
+      const studentData = activeStudentsData[activeSidebarSocketId];
+      const pcNum = studentData ? studentData.pc_number : '';
+      openFullscreenModal(activeSidebarSocketId, pcNum);
+    }
+  });
+}
+
+
 
 
 // 1. 소켓 연결 핸들러
@@ -60,15 +161,23 @@ socket.on('connect', () => {
 });
 
 // 2. 소켓 이벤트 수신
+// 2. 소켓 이벤트 수신
 // 최초 로드 시 전체 학생 목록
 socket.on('student_list', (studentList) => {
   console.log('[Dashboard] 학생 목록 로드됨:', studentList);
   studentsGrid.innerHTML = '';
   
+  // 로컬 캐시 초기화
+  for (const key in activeStudentsData) delete activeStudentsData[key];
+  
   if (studentList.length === 0) {
     showEmptyState();
   } else {
     studentList.forEach(student => {
+      activeStudentsData[student.socket_id] = {
+        pc_number: student.pc_number,
+        processes: student.processes || []
+      };
       renderStudentCard(student);
     });
   }
@@ -78,11 +187,15 @@ socket.on('student_list', (studentList) => {
 // 신규 학생 접속
 socket.on('student_connected', (student) => {
   console.log('[Dashboard] 학생 접속:', student);
-  // 기존에 그려진 '대기 중' 안내 메시지 제거
   const emptyState = studentsGrid.querySelector('.no-students');
   if (emptyState) {
     studentsGrid.innerHTML = '';
   }
+  
+  activeStudentsData[student.socket_id] = {
+    pc_number: student.pc_number,
+    processes: student.processes || []
+  };
   
   renderStudentCard(student);
   updateStats();
@@ -110,11 +223,9 @@ socket.on('student_disconnected', (data) => {
       lucide.createIcons();
     }
     
-    // 프로세스 리스트 초기화
-    const procListDiv = card.querySelector('.process-list');
-    if (procListDiv) {
-      procListDiv.innerHTML = '<span class="no-bad-apps"><i data-lucide="alert-triangle" style="width:0.8rem;height:0.8rem;"></i>통신 두절됨</span>';
-      lucide.createIcons();
+    // 끊긴 학생의 제어 사이드바가 켜져 있었다면 마지막 정보를 남기지 않고 즉각 정보창 닫기!
+    if (activeSidebarSocketId === data.socket_id) {
+      closeControlSidebar();
     }
   }
   updateStats();
@@ -142,7 +253,13 @@ socket.on('screen_data', (data) => {
       imgElement.style.opacity = 1;
     }
     
-    // 만약 현재 이 학생 화면이 전체화면 확대 모달로 켜져 있다면, 모달 이미지도 동시 실시간 갱신!
+    // 만약 현재 이 학생 화면이 우측 제어 사이드바에 켜져 있다면, 사이드바 이미지 동시 실시간 갱신!
+    if (activeSidebarSocketId === data.socket_id && sidebarImg) {
+      sidebarImg.src = data.image;
+      if (sidebarImgPlaceholder) sidebarImgPlaceholder.style.display = 'none';
+    }
+    
+    // 만약 현재 이 학생 화면이 전체화면 확대 모달로 켜져 있다면, 확대 모달 이미지도 동시 실시간 갱신!
     if (activeModalSocketId === data.socket_id && modalImg) {
       modalImg.src = data.image;
     }
@@ -155,48 +272,16 @@ socket.on('screen_data', (data) => {
 
 // 프로세스 목록 업데이트
 socket.on('process_update', (data) => {
-  const card = activeCards[data.socket_id];
-  if (card) {
-    const procListDiv = card.querySelector('.process-list');
-    if (procListDiv) {
-      procListDiv.innerHTML = '';
-      const processes = data.processes || [];
-      
-      if (processes.length === 0) {
-        procListDiv.innerHTML = '<span class="no-bad-apps"><i data-lucide="check-circle" style="width:0.8rem;height:0.8rem;color:#10b981;"></i>안심 상태 (딴짓 없음)</span>';
-      } else {
-        processes.forEach(proc => {
-          const chip = document.createElement('div');
-          chip.className = 'process-chip';
-          // 윈도우 제목이 너무 길면 자름
-          const displayTitle = proc.title.length > 12 ? proc.title.substring(0, 12) + '...' : proc.title;
-          chip.innerHTML = `
-            <span title="${proc.title} (${proc.name})">${displayTitle}</span>
-            <button class="btn-kill" data-socket-id="${data.socket_id}" data-proc-name="${proc.name}" title="종료 명령 전송">
-              <i data-lucide="x"></i>
-            </button>
-          `;
-          
-          // 강제 종료 버튼 바인딩
-          chip.querySelector('.btn-kill').addEventListener('click', (e) => {
-            const btn = e.currentTarget;
-            const targetSocketId = btn.getAttribute('data-socket-id');
-            const processName = btn.getAttribute('data-proc-name');
-            
-            // 시각적 피드백 제공 (버튼 회전 및 투명도)
-            btn.style.opacity = '0.5';
-            btn.disabled = true;
-            
-            console.log(`[Dashboard] 강제 종료 이벤트 전송: ${targetSocketId} -> ${processName}`);
-            socket.emit('kill_process', { targetSocketId, processName });
-          });
-          
-          procListDiv.appendChild(chip);
-        });
-      }
-      // 아이콘 새로고침
-      lucide.createIcons();
-    }
+  console.log('[Dashboard] 프로세스 업데이트:', data);
+  
+  if (!activeStudentsData[data.socket_id]) {
+    activeStudentsData[data.socket_id] = { pc_number: '미지정', processes: [] };
+  }
+  activeStudentsData[data.socket_id].processes = data.processes || [];
+  
+  // 만약 현재 이 학생이 우측 제어 사이드바에 기동되어 있다면 즉시 갱신
+  if (activeSidebarSocketId === data.socket_id) {
+    renderSidebarProcessList(data.socket_id);
   }
 });
 
@@ -241,16 +326,6 @@ function renderStudentCard(student) {
       </div>
       <img src="" alt="Student Screen" class="screen-img" style="opacity: 0;">
     </div>
-    
-    <!-- 카드 푸터 (프로세스 목록) -->
-    <div class="card-footer">
-      <span class="footer-title">의심스러운 실행 프로그램</span>
-      <div class="process-list">
-        <span class="no-bad-apps">
-          <i data-lucide="loader" style="width:0.8rem;height:0.8rem;animation: spin 1.5s linear infinite;"></i>대기 중...
-        </span>
-      </div>
-    </div>
   `;
 
   // 카드 제거 이벤트 바인딩
@@ -267,21 +342,36 @@ function renderStudentCard(student) {
     if (cardEl) {
       cardEl.remove();
       delete activeCards[sId];
+      delete activeStudentsData[sId];
     }
+    
+    // 만약 지운 학생의 사이드바가 열려있다면 즉시 닫기
+    if (activeSidebarSocketId === sId) {
+      closeControlSidebar();
+    }
+    
     updateStats();
     if (Object.keys(activeCards).length === 0) {
       showEmptyState();
     }
   });
 
-  // 전체화면 줌 토글 클릭 이벤트 바인딩
+  // 카드 클릭 시 우측 제어 사이드바 슬라이딩 개방 바인딩
+  card.addEventListener('click', () => {
+    // 오프라인(통신 두절) 상태인 카드는 클릭해도 제어 창이 열리지 않도록 차단
+    if (card.classList.contains('offline')) {
+      console.log(`[Dashboard] 오프라인 학생 PC 제어 거부: ${student.socket_id}`);
+      return;
+    }
+    openControlSidebar(student.socket_id, student.pc_number);
+  });
+
+  // screen-feed 영역 커서 스타일 줌인 처리
   const feed = card.querySelector('.screen-feed');
   if (feed) {
     feed.style.cursor = 'zoom-in';
-    feed.addEventListener('click', () => {
-      openFullscreenModal(student.socket_id, student.pc_number);
-    });
   }
+
 
   studentsGrid.appendChild(card);
   activeCards[student.socket_id] = card;

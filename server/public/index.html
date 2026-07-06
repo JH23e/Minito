@@ -55,35 +55,67 @@
       </div>
     </header>
 
-    <!-- 2. 바디 콘텐츠 -->
-    <main class="main-content">
-      <!-- 학생 화면 바둑판 그리드 -->
-      <div class="grid-layout" id="students-grid">
-        <div class="no-students">
-          <i data-lucide="monitor-off" class="empty-icon"></i>
-          <p>관제 실습실 대기 중</p>
-          <span class="empty-sub">상단의 AI융합실습실 탭 중 하나를 선택하면 관제 신호(비콘) 송출이 개시됩니다.</span>
+    <!-- 2. 바디 콘텐츠 (모니터링 그리드 + 제어 사이드바 구성) -->
+    <div class="main-body" style="display:flex; flex:1; overflow:hidden; position:relative;">
+      
+      <!-- 왼쪽: 모니터링 그리드 -->
+      <main class="main-content" style="flex:1; padding:0.85rem; overflow-y:auto; transition: all 0.3s;">
+        <div class="grid-layout" id="students-grid">
+          <div class="no-students">
+            <i data-lucide="monitor-off" class="empty-icon"></i>
+            <p>관제 실습실 대기 중</p>
+            <span class="empty-sub">상단의 AI융합실습실 탭 중 하나를 선택하면 관제 신호(비콘) 송출이 개시됩니다.</span>
+          </div>
         </div>
-      </div>
-    </main>
-
-  </div>
-
-
-
-  <!-- 전체화면 이미지 확대 모달 overlay -->
-  <div id="image-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000000; z-index:9999; align-items:center; justify-content:center;">
-    <div style="position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
-      <!-- 플로팅 닫기 버튼 -->
-      <button id="close-modal" style="position:absolute; top:20px; right:20px; background:rgba(0,0,0,0.6); border:none; color:#ffffff; font-size:2rem; width:3.5rem; height:3.5rem; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s; outline:none; font-family:sans-serif; z-index:10000; border:1px solid rgba(255,255,255,0.2);">&times;</button>
+      </main>
       
-      <!-- 플로팅 PC 타이틀 라벨 -->
-      <div id="modal-title" style="position:absolute; top:20px; left:20px; background:rgba(0,0,0,0.6); color:#ffffff; font-weight:800; font-size:1.1rem; padding:0.5rem 1.2rem; border-radius:30px; font-family:'Outfit',sans-serif; z-index:10000; border:1px solid rgba(255,255,255,0.2);">PC 화면 실시간 확대</div>
+      <!-- 오른쪽: 제어 사이드바 (기본 width 0px, 슬라이딩 개방) -->
+      <aside id="control-sidebar" style="width:0px; min-width:0; background:#ffffff; border-left:1px solid var(--border-color); display:flex; flex-direction:column; overflow:hidden; transition:all 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: -4px 0 20px rgba(15, 23, 42, 0.05); z-index:100;">
+        <!-- 사이드바 헤더 -->
+        <div style="padding:0.75rem 1rem; border-bottom:1px solid var(--border-color); display:flex; align-items:center; justify-content:space-between; background:#f8fafc; min-height: 48px;">
+          <span id="sidebar-title" style="font-family:'Outfit',sans-serif; font-weight:800; font-size:0.95rem; color:var(--text-main);">PC 관제 및 제어</span>
+          <button id="close-sidebar" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:1.4rem; display:flex; align-items:center; justify-content:center; width:1.8rem; height:1.8rem; border-radius:50%; transition:background 0.2s; outline:none;">&times;</button>
+        </div>
+        
+        <!-- 사이드바 바디 -->
+        <div style="padding:1rem; display:flex; flex-direction:column; gap:1.25rem; flex:1; overflow-y:auto;">
+          <!-- 1. 확대 화면 피드 -->
+          <div>
+            <div style="width:100%; padding-top:56.25%; position:relative; background:#f1f5f9; border-radius:8px; overflow:hidden; border:1px solid var(--border-color);">
+              <img id="sidebar-img" src="" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; background:#000000; cursor:zoom-in;" title="클릭하여 전체화면 확대">
+              <div id="sidebar-img-placeholder" style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:var(--text-dark); font-size:0.75rem; font-weight:500;">
+                화면 대기 중
+              </div>
+            </div>
+          </div>
+          
+          <!-- 2. 의심 프로그램 제어판 -->
+          <div style="display:flex; flex-direction:column; flex:1; min-height: 200px;">
+            <div style="font-size:0.7rem; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.4rem;">실행 중인 프로그램</div>
+            <div id="sidebar-process-list" style="display:flex; flex-direction:column; gap:0.45rem; flex:1; overflow-y:auto; padding-right:4px;">
+              <span style="color:var(--text-dark); font-size:0.78rem; font-weight:500; display:flex; align-items:center; gap:0.3rem;">
+                <i data-lucide="check-circle" style="width:0.85rem;height:0.85rem;color:#10b981;"></i>프로그램 내역이 없습니다.
+              </span>
+            </div>
+          </div>
+        </div>
+      </aside>
       
-      <!-- 화면 꽉 채움 이미지 (비율 자동 매칭) -->
-      <img id="modal-img" src="" style="width:100%; height:100%; object-fit:contain; background:#000000;">
     </div>
-  </div>
+
+    <!-- 전체화면 이미지 확대 모달 overlay -->
+    <div id="image-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000000; z-index:99999; align-items:center; justify-content:center;">
+      <div style="position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+        <!-- 플로팅 닫기 버튼 -->
+        <button id="close-modal" style="position:absolute; top:20px; right:20px; background:rgba(0,0,0,0.6); border:none; color:#ffffff; font-size:2rem; width:3.5rem; height:3.5rem; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s; outline:none; font-family:sans-serif; z-index:100000; border:1px solid rgba(255,255,255,0.2);">&times;</button>
+        
+        <!-- 플로팅 PC 타이틀 라벨 -->
+        <div id="modal-title" style="position:absolute; top:20px; left:20px; background:rgba(0,0,0,0.6); color:#ffffff; font-weight:800; font-size:1.1rem; padding:0.5rem 1.2rem; border-radius:30px; font-family:'Outfit',sans-serif; z-index:100000; border:1px solid rgba(255,255,255,0.2);">PC 화면 확대</div>
+        
+        <!-- 화면 꽉 채움 이미지 (비율 자동 매칭) -->
+        <img id="modal-img" src="" style="width:100%; height:100%; object-fit:contain; background:#000000;">
+      </div>
+    </div>
 
   <!-- Socket.io 라이브러리 로드 -->
   <script src="/socket.io/socket.io.js"></script>
