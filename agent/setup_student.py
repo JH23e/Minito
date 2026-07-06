@@ -94,6 +94,17 @@ def write_registry():
     except Exception as e:
         print(f"제어판 등록 레지스트리 생성 실패: {e}")
 
+def register_firewall():
+    if not is_windows:
+        return
+    try:
+        # 기존 규칙 제거 후 Minito 전용 UDP 포트 인바운드 규칙 등록
+        subprocess.run('netsh advfirewall firewall delete rule name="Minito Student Agent"', shell=True, capture_output=True)
+        subprocess.run('netsh advfirewall firewall add rule name="Minito Student Agent" dir=in action=allow protocol=UDP localport=10101 description="Minito Student UDP Screen Stream"', shell=True, capture_output=True)
+        print("[방화벽] 학생용 UDP 포트 인바운드 허용 예외 등록 완료")
+    except Exception as e:
+        print(f"[방화벽] 예외 등록 실패: {e}")
+
 def run_agent():
     agent_exe = os.path.join(INSTALL_DIR, 'Minito_student.exe')
     if os.path.exists(agent_exe):
@@ -107,6 +118,7 @@ if __name__ == '__main__':
     try:
         install_files()
         write_registry()
+        register_firewall()
         run_agent()
         show_message("Minito Student Agent가 컴퓨터에 성공적으로 설치되었습니다.\n설정 프롬프트에 맞춰 정보를 새로 작성해 주세요.")
     except Exception as e:

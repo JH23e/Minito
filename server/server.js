@@ -142,9 +142,36 @@ class MinitoServer {
     return '127.0.0.1';
   }
 
+  // Windows 방화벽에 Minito 교수자 서비스 예외 규칙 등록
+  registerFirewallRules() {
+    if (process.platform !== 'win32') return;
+    const { exec } = require('child_process');
+    
+    const tcpCmd = `netsh advfirewall firewall add rule name="Minito Professor TCP" dir=in action=allow protocol=TCP localport=3000 description="Minito Professor Socket Server"`;
+    const udpCmd = `netsh advfirewall firewall add rule name="Minito Professor UDP" dir=in action=allow protocol=UDP localport=10101 description="Minito Professor Screen Receiver"`;
+    
+    // 중복 제거 후 안전하게 신규 규칙 인서트
+    exec('netsh advfirewall firewall delete rule name="Minito Professor TCP"', () => {
+      exec(tcpCmd, (err) => {
+        if (err) console.log('[방화벽] TCP 등록 오류:', err.message);
+        else console.log('[방화벽] TCP (Port 3000) 인바운드 허용 완료');
+      });
+    });
+    
+    exec('netsh advfirewall firewall delete rule name="Minito Professor UDP"', () => {
+      exec(udpCmd, (err) => {
+        if (err) console.log('[방화벽] UDP 등록 오류:', err.message);
+        else console.log('[방화벽] UDP (Port 10101) 인바운드 허용 완료');
+      });
+    });
+  }
+
   // 모든 서버 스레드/서브시스템 구동 시작
   start() {
     console.log(`[네트워크] 서버 IP 감지: ${this.serverIp}`);
+    
+    // Windows 방화벽 인바운드 규칙 자동 해제 등록
+    this.registerFirewallRules();
     
     // 설정 파일 내 first_run 필드가 정의되어 있지 않거나(undefined), true이거나, classroom_id가 비어있다면 무조건 최초 실행으로 규정
     const isFirstRun = this.configManager.config.first_run === undefined || 
