@@ -24,8 +24,15 @@
         </div>
         <div class="logo-text">
           <h1>ClassGuard</h1>
-          <span class="logo-sub">실습실 관제 시스템</span>
         </div>
+      </div>
+
+      <!-- 강의실 탭 리스트 (관리자가 설정한 교실만 시각적 active 탭 고정, 클릭 변경 불가) -->
+      <div class="classroom-tabs" id="classroom-tabs">
+        <button class="tab-btn" data-room="ai_1">AI융합실습실 1실</button>
+        <button class="tab-btn" data-room="ai_2">AI융합실습실 2실</button>
+        <button class="tab-btn" data-room="ai_3">AI융합실습실 3실</button>
+        <button class="tab-btn" data-room="ai_4">AI융합실습실 4실</button>
       </div>
 
       <!-- 통계 위젯 -->
@@ -40,15 +47,11 @@
         </div>
       </div>
 
-      <!-- 우측 컨트롤 그룹 -->
+      <!-- 우측 설정 컨트롤 단추 -->
       <div class="header-controls">
-        <div class="classroom-info" id="btn-config-classroom">
-          <span class="room-label">현재 강의실</span>
-          <div class="room-badge">
-            <i data-lucide="map-pin"></i>
-            <span id="txt-classroom-id">301</span>호
-          </div>
-        </div>
+        <button class="btn-config" id="btn-config-classroom" title="실습실 고정 설정" style="background:none; border:none; color:var(--text-muted); cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0.5rem; border-radius:8px; transition:background 0.2s;">
+          <i data-lucide="settings" style="width:1.35rem; height:1.35rem;"></i>
+        </button>
       </div>
     </header>
 
@@ -56,41 +59,30 @@
     <main class="main-content">
       <!-- 학생 화면 바둑판 그리드 -->
       <div class="grid-layout" id="students-grid">
-        <!-- 템플릿 카드 예시 (JS에서 동적 생성됨) -->
         <div class="no-students">
           <i data-lucide="monitor-off" class="empty-icon"></i>
-          <p>접속 대기 중...</p>
-          <span class="empty-sub">학생 PC에서 에이전트를 가동해 주세요.</span>
+          <p>관제 실습실 대기 중</p>
+          <span class="empty-sub">상단의 AI융합실습실 탭 중 하나를 선택하면 관제 신호(비콘) 송출이 개시됩니다.</span>
         </div>
       </div>
     </main>
 
-    <!-- 3. 강의실 설정 모달창 (Glassmorphism Modal) -->
-    <div class="modal-overlay" id="config-modal">
-      <div class="modal-card">
-        <div class="modal-header">
-          <h2>강의실 번호 설정</h2>
-          <button class="btn-close-modal" id="btn-close-modal">
-            <i data-lucide="x"></i>
-          </button>
-        </div>
-        <div class="modal-body">
-          <p class="modal-desc">
-            현재 관제할 강의실 번호를 입력하십시오.<br>
-            에이전트들에게 브로드캐스트 비콘 정보가 동적으로 실시간 업데이트됩니다.
-          </p>
-          <div class="input-group">
-            <label for="input-classroom-id">강의실 호수</label>
-            <input type="text" id="input-classroom-id" placeholder="예: 301, 502" maxlength="10">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn-cancel" id="btn-cancel-modal">취소</button>
-          <button class="btn-save" id="btn-save-modal">저장 및 적용</button>
-        </div>
-      </div>
-    </div>
+  </div>
 
+
+
+  <!-- 전체화면 이미지 확대 모달 overlay -->
+  <div id="image-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000000; z-index:9999; align-items:center; justify-content:center;">
+    <div style="position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+      <!-- 플로팅 닫기 버튼 -->
+      <button id="close-modal" style="position:absolute; top:20px; right:20px; background:rgba(0,0,0,0.6); border:none; color:#ffffff; font-size:2rem; width:3.5rem; height:3.5rem; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s; outline:none; font-family:sans-serif; z-index:10000; border:1px solid rgba(255,255,255,0.2);">&times;</button>
+      
+      <!-- 플로팅 PC 타이틀 라벨 -->
+      <div id="modal-title" style="position:absolute; top:20px; left:20px; background:rgba(0,0,0,0.6); color:#ffffff; font-weight:800; font-size:1.1rem; padding:0.5rem 1.2rem; border-radius:30px; font-family:'Outfit',sans-serif; z-index:10000; border:1px solid rgba(255,255,255,0.2);">PC 화면 실시간 확대</div>
+      
+      <!-- 화면 꽉 채움 이미지 (비율 자동 매칭) -->
+      <img id="modal-img" src="" style="width:100%; height:100%; object-fit:contain; background:#000000;">
+    </div>
   </div>
 
   <!-- Socket.io 라이브러리 로드 -->

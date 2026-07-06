@@ -16,6 +16,11 @@ class UdpBeaconBroadcaster {
       console.log(`[UDP] 브로드캐스트 비콘 송출 시작.`);
       
       this.intervalId = setInterval(() => {
+        // 강의실 지정이 완료되지 않았다면 비콘을 전송하지 않고 대기 (혼선 원천 방지)
+        if (!this.config.classroom_id) {
+          return;
+        }
+
         const beacon = JSON.stringify({
           classroom_id: this.config.classroom_id,
           server_ip: this.serverIp,

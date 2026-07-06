@@ -224,14 +224,20 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 /server/dist/
+/server/build/
 /agent/dist/
 /agent/build/
 *.log
+
+# --- Local Config Files (MUST NOT BE COMMITTED) ---
+agent/config.json
+server/config.json
 
 # --- Custom build tools & temp downloads ---
 build_student*.ps1
 python_embed.zip
 temp_python/
 
-
-
+# --- IDE Settings ---
+.vscode/
+.idea/

@@ -30,21 +30,21 @@ class ConfigManager:
             except Exception as e:
                 print(f"[설정] 로드 실패: {e}")
 
-    # 변경된 설정을 파일에 저장
+    # 변경된 설정을 파일에 저장 (이름/학번은 PC 번호로 자동 치환하여 호환성 유지)
     def save(self, classroom_id, student_id, student_name, pc_number):
-        self.config = {
-            "classroom_id": classroom_id,
-            "student_id": student_id,
-            "student_name": student_name,
-            "pc_number": pc_number
-        }
-        try:
-            with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-                json.dump(self.config, f, indent=2, ensure_ascii=False)
-            return True
-        except Exception as e:
-            print(f"[설정] 저장 실패: {e}")
-            return False
+      self.config = {
+          "classroom_id": classroom_id,
+          "student_id": f"PC_{pc_number}" if not student_id else student_id,
+          "student_name": f"PC {pc_number}" if not student_name else student_name,
+          "pc_number": pc_number
+      }
+      try:
+          with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+              json.dump(self.config, f, indent=2, ensure_ascii=False)
+          return True
+      except Exception as e:
+          print(f"[설정] 저장 실패: {e}")
+          return False
 
     # Windows 레지스트리에 프로그램을 시작 프로그램으로 등록
     def register_to_startup(self):
@@ -64,6 +64,6 @@ class ConfigManager:
         except Exception as e:
             print(f"[설정] 시작프로그램 등록 실패: {e}")
 
-    # 필수 설정값이 입력되어 있는지 검증
+    # 필수 설정값이 입력되어 있는지 검증 (PC 번호 및 강의실 ID 필수)
     def is_valid(self):
-        return bool(self.config["classroom_id"] and self.config["student_id"] and self.config["student_name"])
+        return bool(self.config["classroom_id"] and self.config["pc_number"])

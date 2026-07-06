@@ -28,10 +28,11 @@ class ClassGuardAgent:
         self.image_id_counter = 0
         self.udp_listener = None
 
-    # 2초마다 화면을 캡처하여 분할된 청크를 UDP로 송출하는 무한 루프 스레드
+    # 1초마다 화면을 캡처하여 분할된 청크를 감지된 모든 교수 PC로 UDP 송출하는 무한 루프 스레드
     def screen_capture_loop(self):
         while self.running:
-            if not self.socket_client.connected or not self.server_ip or not self.server_udp_port:
+            active_servers = self.udp_listener.get_servers() if self.udp_listener else []
+            if not self.socket_client.connected or not active_servers:
                 time.sleep(1)
                 continue
             try:
@@ -45,13 +46,19 @@ class ClassGuardAgent:
                 for idx, chunk in enumerate(chunks):
                     # 헤더: student_id(20B) + image_id(4B) + total_chunks(2B) + chunk_index(2B)
                     header = struct.pack('!20sIHH', student_id_bytes, self.image_id_counter, len(chunks), idx)
-                    self.udp_send_socket.sendto(header + chunk, (self.server_ip, self.server_udp_port))
+                    
+                    # 감지된 모든 활성 교수 PC 대시보드로 UDP 전송
+                    for srv in active_servers:
+                        try:
+                            self.udp_send_socket.sendto(header + chunk, (srv["ip"], srv["udp_port"]))
+                        except:
+                            pass
                 
                 elapsed = time.time() - start_time
-                time.sleep(max(0.1, 2.0 - elapsed))
+                time.sleep(max(0.1, 1.0 - elapsed))
             except Exception as e:
                 print(f"[화면 스레드] 루프 에러: {e}")
-                time.sleep(2)
+                time.sleep(1)
 
     # 5초마다 GUI 프로그램 프로세스 정보를 파싱하여 소켓으로 송신하는 스레드
     def process_monitor_loop(self):
@@ -81,31 +88,28 @@ class ClassGuardAgent:
                 print(f"[프로세스 스레드] 루프 에러: {e}")
                 time.sleep(5)
 
-    # 에이전트 구동 및 자동 재연결 오케스트레이션
+    # 에이전트 구동 및 자동 다중 재연결 오케스트레이션
     def start(self):
         self.running = True
+        
+        # 동적 다중 서버 탐색 리스너 시작
+        self.udp_listener = UdpBeaconListener(self.config_manager.config["classroom_id"])
+        self.udp_listener.start_listening()
         
         threading.Thread(target=self.screen_capture_loop, daemon=True).start()
         threading.Thread(target=self.process_monitor_loop, daemon=True).start()
         
+        # 3초마다 활성 교수 PC 연결 상태 감시 및 소켓 동기화
         while self.running:
-            if not self.socket_client.connected:
-                self.udp_listener = UdpBeaconListener(self.config_manager.config["classroom_id"])
-                server_info = self.udp_listener.find_server()
-                
-                if server_info and self.running:
-                    self.server_ip = server_info["ip"]
-                    self.server_udp_port = server_info["udp_port"]
-                    
-                    if self.socket_client.connect(server_info["ip"], server_info["port"]):
-                        self.socket_client.sio.wait()
-                time.sleep(3)
+            active_servers = self.udp_listener.get_servers()
+            self.socket_client.update_connections(active_servers)
+            time.sleep(3)
 
     # 에이전트 안전 정지
     def stop(self):
         self.running = False
         if self.udp_listener:
-            self.udp_listener.running = False
+            self.udp_listener.stop()
         self.socket_client.close()
 
     # 실시간 설정 정보 갱신 및 소켓 통신 전면 리셋

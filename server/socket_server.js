@@ -70,6 +70,19 @@ class SocketServer {
         }
       });
 
+      // 대시보드 내 특정 PC 강제 제거 요청 접수 시 소켓 단절을 통한 재등록 루프 기동
+      socket.on('remove_student_request', (data) => {
+        const { targetSocketId } = data;
+        const student = this.students[targetSocketId];
+        if (student) {
+          console.log(`[소켓] 대시보드 삭제 지시 수신: Socket ID ${targetSocketId} (${student.student_name})`);
+          const targetSocket = this.io.sockets.sockets.get(targetSocketId);
+          if (targetSocket) {
+            targetSocket.disconnect(true); // 강제 세션 해제 (에이전트는 3초 뒤 자동 재접속 등록 개시)
+          }
+        }
+      });
+
       // 접속 해제
       socket.on('disconnect', () => {
         if (socket.id === this.dashboardSocketId) {

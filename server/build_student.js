@@ -94,17 +94,18 @@ async function main() {
 
     console.log("[5-1/7] 에이전트 핵심 파일 Minito_student.exe 컴파일...");
     const agentPy = path.join(agentDir, 'agent.py');
-    runCmd(`"${pyinstallerExe}" --onefile --noconsole --name Minito_student --workpath "${buildPath}" --distpath "${distPath}" "${agentPy}"`);
+    runCmd(`"${pyinstallerExe}" --onefile --noconsole --name Minito_student --paths "${agentDir}" --workpath "${buildPath}" --distpath "${distPath}" "${agentPy}"`, agentDir);
 
     console.log("[5-2/7] 언인스톨러 Minito_student_uninstall.exe 컴파일...");
     const uninstallPy = path.join(agentDir, 'uninstall_student.py');
-    runCmd(`"${pyinstallerExe}" --onefile --noconsole --name Minito_student_uninstall --workpath "${buildPath}" --distpath "${distPath}" "${uninstallPy}"`);
+    runCmd(`"${pyinstallerExe}" --onefile --noconsole --name Minito_student_uninstall --paths "${agentDir}" --workpath "${buildPath}" --distpath "${distPath}" "${uninstallPy}"`, agentDir);
 
     console.log("[5-3/7] 최종 통합 설치 패키지 Minito_student_setup.exe 빌드...");
     const setupPy = path.join(agentDir, 'setup_student.py');
     const addDataAgent = `${path.join(distPath, 'Minito_student.exe')};.`;
     const addDataUninstall = `${path.join(distPath, 'Minito_student_uninstall.exe')};.`;
-    runCmd(`"${pyinstallerExe}" --onefile --noconsole --name Minito_student_setup --add-data "${addDataAgent}" --add-data "${addDataUninstall}" --workpath "${buildPath}" --distpath "${distPath}" "${setupPy}"`);
+    runCmd(`"${pyinstallerExe}" --onefile --noconsole --name Minito_student_setup --paths "${agentDir}" --add-data "${addDataAgent}" --add-data "${addDataUninstall}" --workpath "${buildPath}" --distpath "${distPath}" "${setupPy}"`, agentDir);
+
 
     // ----------------------------------------------------
     // 6. 임시 리소스 및 부산물 청소
